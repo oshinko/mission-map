@@ -4,10 +4,10 @@ export interface Place {
   type: 'point' | 'area';
   name: string;
   address: string;
-  points: Point[];
+  coordinates: Coordinate[];
 }
 
-export interface Point {
+export interface Coordinate {
   mapId: string;
   placeLocalId: string;
   index: number;

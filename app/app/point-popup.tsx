@@ -14,7 +14,7 @@ export default function PointPopup({ place }: { place: Place }) {
       </div>
       <div className="popup-body">
         {place.address}<br/>
-        経度: {place.points[0].longitude}, 緯度: {place.points[0].latitude}
+        経度: {place.coordinates[0].longitude}, 緯度: {place.coordinates[0].latitude}
       </div>
 
       <button onClick={handleClick}>Click Me</button>

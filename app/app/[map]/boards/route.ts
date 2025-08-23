@@ -25,7 +25,7 @@ mapId,localId,type,name,address,latitude,longitude,geohash
         type: vals[2],
         name: vals[3],
         address: vals[4],
-        points: [
+        coordinates: [
           {
             mapId: vals[0],
             placeLocalId: vals[1],

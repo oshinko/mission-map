@@ -104,7 +104,7 @@ export default function Map({ id }: { id: string }) {
       }
 
       boardData.forEach(board => {
-        const latlng = { lat: board.points[0].latitude, lng: board.points[0].longitude };
+        const latlng = { lat: board.coordinates[0].latitude, lng: board.coordinates[0].longitude };
         const container = document.createElement('div');
         L.marker(latlng).addTo(boardsLayer).bindPopup(container);
         createRoot(container).render(<PointPopup place={board} />);
