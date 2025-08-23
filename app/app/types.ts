@@ -1,9 +1,17 @@
-export interface PosterBoard {
+export interface Place {
   mapId: string;
   localId: string;
-  areaNumber: number;
-  number: number;
+  type: 'point' | 'area';
+  name: string;
   address: string;
-  longitude: number;
+  points: Point[];
+}
+
+export interface Point {
+  mapId: string;
+  placeLocalId: string;
+  index: number;
   latitude: number;
-};
+  longitude: number;
+  geohash: string;
+}

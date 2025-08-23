@@ -1,36 +1,56 @@
 import { notFound } from 'next/navigation';
 
-import type { PosterBoard } from '../../types';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { eq } from 'drizzle-orm';
+import { deleteme } from '@/db/schema';
+
+import type { Place } from '../../types';
 
 const MOCK = {
   DATA: `
-Map ID,Local ID,投票区,番号,所在地,緯度,経度,ジオハッシュ
-11111111,11111115,0,1,東京都小平市花小金井南町一丁目２３番,139.511948,35.726749,
-11111111,11111111,1,1,静岡県御殿場市御殿場２７番地の１,138.9407431,35.3140996,
-11111111,11111112,1,2,静岡県御殿場市西田中２３７番地の７,138.9402341,35.3148969,
-11111111,11111113,1,3,静岡県御殿場市御殿場２４７番地の１,138.944846,35.3177324,
-11111111,11111114,1,4,静岡県御殿場市御殿場５３１番地の２,138.9431674,35.31569,
+mapId,localId,type,name,address,latitude,longitude,geohash
+11111111,0-1,point,1-1,花小金井南町二丁目７−３,35.72123204820576,139.5163833580136,
+11111111,0-2,point,1-2,花小金井南町一丁目２３番,35.726749,139.511948,
 `.trim(),
 
-  parseCSV(csv: string): PosterBoard[] {
+  parseCSV(csv: string): Place[] {
     const lines = csv.split(/\r?\n/);
     const rows = [];
     for (let i = 1; i < lines.length; i++) {
       if (!lines[i].trim()) continue;
-      const cols = lines[i].split(',');
+      const vals = lines[i].split(',');
       rows.push({
-        mapId: cols[0],
-        localId: cols[1],
-        areaNumber: Number(cols[2]),
-        number: Number(cols[3]),
-        address: cols[4],
-        longitude: parseFloat(cols[5]),
-        latitude: parseFloat(cols[6])
-      });
+        mapId: vals[0],
+        localId: vals[1],
+        type: vals[2],
+        name: vals[3],
+        address: vals[4],
+        points: [
+          {
+            mapId: vals[0],
+            placeLocalId: vals[1],
+            index: 0,
+            latitude: parseFloat(vals[5]),
+            longitude: parseFloat(vals[6]),
+            geohash: ''
+          }
+        ]
+      } as Place);
     }
     return rows;
   }
 };
+
+const db = drizzle(process.env.DATABASE_URL!);
+
+async function getBoards(mapId: string) {
+  const [item] = await db
+    .select()
+    .from(deleteme)
+    // .where(eq(objects.key, req.app.locals.key))
+    .limit(1);
+  return [item];
+}
 
 export async function GET(_req: Request) {
   const items = MOCK.parseCSV(MOCK.DATA);

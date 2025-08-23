@@ -7,8 +7,8 @@ import markerIconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { createRoot } from 'react-dom/client';
 import { useEffect, useRef } from 'react';
 
-import BoardPopup from './board-popup';
-import type { PosterBoard } from './types';
+import PointPopup from './point-popup';
+import type { Place } from './types';
 
 // アイコン読み込み設定
 L.Marker.prototype.options.icon = L.icon({
@@ -23,7 +23,7 @@ L.Marker.prototype.options.icon = L.icon({
 });
 
 async function fetchData(mapId: string) {
-  return await (await fetch(`/${mapId}/boards`)).json() as PosterBoard[];
+  return await (await fetch(`/${mapId}/boards`)).json() as Place[];
 }
 
 export default function Map({ id }: { id: string }) {
@@ -104,10 +104,10 @@ export default function Map({ id }: { id: string }) {
       }
 
       boardData.forEach(board => {
-        const latlng = { lat: board.latitude, lng: board.longitude };
+        const latlng = { lat: board.points[0].latitude, lng: board.points[0].longitude };
         const container = document.createElement('div');
         L.marker(latlng).addTo(boardsLayer).bindPopup(container);
-        createRoot(container).render(<BoardPopup board={board} />);
+        createRoot(container).render(<PointPopup place={board} />);
         bounds.extend(latlng);
       });
     })();

@@ -12,7 +12,7 @@ export default function Page({ params }: { params: Promise<{ map: string; }>; })
   const { map } = use(params);
 
   return (
-    <main style={{ padding: 16 }}>
+    <main>
       <Map id={map} />
     </main>
   );

@@ -3,7 +3,7 @@ version: '3.9'
 services:
   app:
     build: ./app
-    container_name: poster-board-map-app
+    container_name: mission-map-app
     ports:
       - "${HOST_PORT}:3000"
     environment:
@@ -16,7 +16,7 @@ services:
 
   db:
     image: postgres:17-alpine
-    container_name: poster-board-map-db
+    container_name: mission-map-db
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER}

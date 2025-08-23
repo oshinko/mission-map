@@ -1,0 +1,5 @@
+{
+  "[html][javascript][json][typescript][typescriptreact]": {
+    "editor.tabSize": 2
+  }
+}
