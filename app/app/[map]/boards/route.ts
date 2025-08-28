@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
 
 import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
+
 import { eq } from 'drizzle-orm';
-import { deleteme } from '@/db/schema';
+import { maps } from '@/db/schema';
 
 import type { Place } from '../../types';
 
@@ -46,13 +48,15 @@ const db = drizzle(process.env.DATABASE_URL!);
 async function getBoards(mapId: string) {
   const [item] = await db
     .select()
-    .from(deleteme)
+    .from(maps)
     // .where(eq(objects.key, req.app.locals.key))
     .limit(1);
   return [item];
 }
 
 export async function GET(_req: Request) {
+  migrate(db, { migrationsFolder: './drizzle' });
+
   const items = MOCK.parseCSV(MOCK.DATA);
 
   if (items.length === 0) notFound();
