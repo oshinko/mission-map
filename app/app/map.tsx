@@ -7,8 +7,8 @@ import markerIconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { createRoot } from 'react-dom/client';
 import { useEffect, useRef } from 'react';
 
-import PointPopup from './point-popup';
-import type { Place } from './types';
+import PointPopup from '@/app/point-popup';
+import type { Map } from '@/app/types';
 
 // アイコン読み込み設定
 L.Marker.prototype.options.icon = L.icon({
@@ -23,7 +23,11 @@ L.Marker.prototype.options.icon = L.icon({
 });
 
 async function fetchData(mapId: string) {
-  return await (await fetch(`/${mapId}/boards`)).json() as Place[];
+  const res = await fetch(`/api/${mapId}`);
+  if (res.ok) return await res.json() as Map;
+  const hint = await res.text() || (res.status === 404 ? 'Map not found' : res.statusText);
+  window.alert(hint);
+  throw new Error(hint);
 }
 
 export default function Map({ id }: { id: string }) {
@@ -95,19 +99,19 @@ export default function Map({ id }: { id: string }) {
 
     // 掲示板ピン配置
     (async () => {
-      const boardData = await fetchData('dummy');
-      const boardsLayer = L.layerGroup().addTo(map);
+      const map_ = await fetchData(id);
+      const placesLayer = L.layerGroup().addTo(map);
       const bounds = L.latLngBounds([]);
 
       if (bounds.isValid()) {
         map.fitBounds(bounds.pad(0.2));
       }
 
-      boardData.forEach(board => {
-        const latlng = { lat: board.coordinates[0].latitude, lng: board.coordinates[0].longitude };
+      map_.places.forEach(place => {
+        const latlng = { lat: place.coordinates[0].latitude, lng: place.coordinates[0].longitude };
         const container = document.createElement('div');
-        L.marker(latlng).addTo(boardsLayer).bindPopup(container);
-        createRoot(container).render(<PointPopup place={board} />);
+        L.marker(latlng).addTo(placesLayer).bindPopup(container);
+        createRoot(container).render(<PointPopup place={place} />);
         bounds.extend(latlng);
       });
     })();

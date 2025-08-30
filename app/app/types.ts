@@ -1,3 +1,9 @@
+export interface Map {
+  id: string;
+  name: string;
+  places: Place[]
+}
+
 export interface Place {
   mapId: string;
   localId: string;
@@ -13,5 +19,4 @@ export interface Coordinate {
   index: number;
   latitude: number;
   longitude: number;
-  geohash: string;
 }

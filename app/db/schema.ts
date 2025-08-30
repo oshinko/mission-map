@@ -33,6 +33,7 @@ export const places = pgTable('places', {
   localId: varchar('local_id', { length: 32 }),
   name: varchar({ length: 255 }).notNull(),
   address: text(),
+  statusIndex: integer('status_index').default(0).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 }, table => [primaryKey({ columns: [table.mapId, table.localId] })]);
@@ -48,7 +49,7 @@ export const placeRelations = relations(places, ({ one, many }) => ({
 export const coordinates = pgTable('coordinates', {
   mapId: varchar('map_id', { length: 11 }),
   placeLocalId: varchar('place_local_id', { length: 32 }),
-  index: integer().notNull(),
+  index: integer().default(0).notNull(),
   latitude: numeric({ precision: 9, scale: 6 }).notNull(),
   longitude: numeric({ precision: 9, scale: 6 }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -77,31 +78,18 @@ export const statusRelations = relations(statuses, ({ one }) => ({
   })
 }));
 
-export const eventType = pgEnum('type', ['status_change', 'comment']);
-
-export const events = pgTable('events', {
+export const comments = pgTable('comments', {
   mapId: varchar('map_id', { length: 11 }),
   placeLocalId: varchar('place_local_id', { length: 32 }),
-  type: eventType().notNull(),
-  statusIndex: integer('status_index'),
-  comment: text(),
+  text: text().notNull(),
   system: boolean().notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-}, table => [
-  primaryKey({ columns: [table.mapId, table.placeLocalId, table.createdAt, table.type] }),
-  check(
-    'value_check',
-    sql`
-      (${table.type} = 'status_change' AND ${table.statusIndex} IS NOT NULL AND ${table.comment} IS NULL)
-      OR
-      (${table.type} = 'comment' AND ${table.comment} IS NOT NULL AND ${table.statusIndex} IS NULL)
-    `)
-]);
+}, table => [primaryKey({ columns: [table.mapId, table.placeLocalId, table.createdAt] })]);
 
-export const eventRelations = relations(events, ({ one }) => ({
+export const commentRelations = relations(comments, ({ one }) => ({
   place: one(places, {
-    fields: [events.mapId, events.placeLocalId],
+    fields: [comments.mapId, comments.placeLocalId],
     references: [places.mapId, places.localId]
   })
 }));
