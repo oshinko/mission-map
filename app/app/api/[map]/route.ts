@@ -7,7 +7,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ map: st
 
   const map = await db.query.maps.findFirst({
     where: (maps, { eq }) => eq(maps.id, mapId),
-    with: { places: { with: { coordinates: true } } }
+    with: { places: { with: { coordinates: true, status: true } }, statuses: true }
   });
 
   if (!map) notFound();

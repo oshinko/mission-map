@@ -6,12 +6,12 @@ import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { createRoot } from 'react-dom/client';
 import { useEffect, useRef } from 'react';
+import type { IconOptions } from 'leaflet';
 
-import PointPopup from '@/app/point-popup';
+import PlacePopup from '@/app/place-popup';
 import type { Map } from '@/app/types';
 
-// アイコン読み込み設定
-L.Marker.prototype.options.icon = L.icon({
+const defaultMarkerIconOptions = {
   iconUrl: markerIcon.src ?? markerIcon.toString(),
   iconRetinaUrl: markerIcon2x.src ?? markerIcon2x.toString(),
   shadowUrl: markerIconShadow.src ?? markerIconShadow.toString(),
@@ -19,8 +19,22 @@ L.Marker.prototype.options.icon = L.icon({
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   tooltipAnchor: [16, -28],
-  shadowSize: [41, 41],
-});
+  shadowSize: [41, 41]
+} as IconOptions;
+
+const defaultMarkerIcon = L.icon(defaultMarkerIconOptions);
+
+const colorMarkerIcons = {
+  blue: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-blue'}),
+  brown: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-brown'}),
+  green: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-green'}),
+  pink: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-pink'}),
+  purple: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-purple'}),
+  red: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-red'}),
+};
+
+// アイコン読み込み設定
+L.Marker.prototype.options.icon = defaultMarkerIcon;
 
 async function fetchData(mapId: string) {
   const res = await fetch(`/api/${mapId}`);
@@ -110,8 +124,19 @@ export default function Map({ id }: { id: string }) {
       map_.places.forEach(place => {
         const latlng = { lat: place.coordinates[0].latitude, lng: place.coordinates[0].longitude };
         const container = document.createElement('div');
-        L.marker(latlng).addTo(placesLayer).bindPopup(container);
-        createRoot(container).render(<PointPopup place={place} />);
+        const icon = colorMarkerIcons[place.status.color as keyof typeof colorMarkerIcons];
+        const marker = L.marker(latlng, { icon }).addTo(placesLayer).bindPopup(container);
+        createRoot(container).render(
+          <PlacePopup
+            place={place}
+            statuses={map_.statuses}
+            onStatusChange={status => {
+              if (status.color && status.color in colorMarkerIcons) {
+                const icon = colorMarkerIcons[status.color as keyof typeof colorMarkerIcons];
+                marker.setIcon(icon);
+              }
+            }} />
+        );
         bounds.extend(latlng);
       });
     })();

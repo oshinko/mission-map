@@ -1,7 +1,8 @@
 export interface Map {
   id: string;
   name: string;
-  places: Place[]
+  places: Place[];
+  statuses: Status[];
 }
 
 export interface Place {
@@ -11,6 +12,7 @@ export interface Place {
   name: string;
   address: string;
   coordinates: Coordinate[];
+  status: Status;
 }
 
 export interface Coordinate {
@@ -19,4 +21,11 @@ export interface Coordinate {
   index: number;
   latitude: number;
   longitude: number;
+}
+
+export interface Status {
+  mapId: string;
+  index: number;
+  name: string;
+  color: string;
 }

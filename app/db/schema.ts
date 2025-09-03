@@ -26,11 +26,15 @@ export const maps = pgTable('maps', {
 
 export const mapRelations = relations(maps, ({ many }) => ({
   places: many(places),
+  statuses: many(statuses)
 }));
+
+export const placeType = pgEnum('place_type', ['point', 'area']);
 
 export const places = pgTable('places', {
   mapId: varchar('map_id', { length: 11 }),
   localId: varchar('local_id', { length: 32 }),
+  type: placeType('type').default('point').notNull(),
   name: varchar({ length: 255 }).notNull(),
   address: text(),
   statusIndex: integer('status_index').default(0).notNull(),
@@ -43,7 +47,11 @@ export const placeRelations = relations(places, ({ one, many }) => ({
     fields: [places.mapId],
     references: [maps.id]
   }),
-  coordinates: many(coordinates)
+  coordinates: many(coordinates),
+  status: one(statuses, {
+    fields: [places.mapId, places.statusIndex],
+    references: [statuses.mapId, statuses.index],
+  })
 }));
 
 export const coordinates = pgTable('coordinates', {
@@ -63,18 +71,22 @@ export const coordinateRelations = relations(coordinates, ({ one }) => ({
   })
 }));
 
+export const statusColor =
+  pgEnum('status_color', ['blue', 'brown', 'green', 'pink', 'purple', 'red']);
+
 export const statuses = pgTable('statuses', {
   mapId: varchar('map_id', { length: 11 }),
   index: integer().notNull(),
   name: varchar({ length: 32 }).notNull(),
+  color: statusColor('color').default('blue').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 }, table => [primaryKey({ columns: [table.mapId, table.index] })]);
 
 export const statusRelations = relations(statuses, ({ one }) => ({
-  map: one(places, {
+  map: one(maps, {
     fields: [statuses.mapId],
-    references: [places.mapId]
+    references: [maps.id]
   })
 }));
 

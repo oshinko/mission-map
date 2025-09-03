@@ -27,6 +27,11 @@ body {
 
 @import "leaflet/dist/leaflet.css";
 
+.marker-icon-blue { filter: hue-rotate(0); }
+.marker-icon-purple { filter: hue-rotate(50deg); }
+.marker-icon-pink { filter: hue-rotate(120deg); }
+.marker-icon-red { filter: hue-rotate(150deg); }
+.marker-icon-brown { filter: hue-rotate(180deg); }
+.marker-icon-green { filter: hue-rotate(250deg); }
+
 #map { height: 100vh; }
-.popup-title { font-weight: 600; margin-bottom: 4px; }
-.popup-body { font-size: 0.9rem; line-height: 1.3; }
