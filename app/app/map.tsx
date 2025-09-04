@@ -12,9 +12,10 @@ const MARKER_ICON_URL = `/marker?scale=1`;
 const MARKER_ICON_RETINA_URL = `/marker?scale=2`;
 
 function createMarkerIcon(options?: { color?: string; }) {
+  const color = options?.color?.replace(/^#+/, '');
   return L.icon({
-    iconUrl: MARKER_ICON_URL + ('&color=' + options?.color) || '',
-    iconRetinaUrl: MARKER_ICON_RETINA_URL + ('&color=' + options?.color) || '',
+    iconUrl: MARKER_ICON_URL + (color ? '&color=' + color : ''),
+    iconRetinaUrl: MARKER_ICON_RETINA_URL + (color ? '&color=' + color : ''),
     shadowUrl: markerIconShadow.src ?? markerIconShadow.toString(),
     iconSize: [25, 41],
     iconAnchor: [12, 41],
@@ -43,8 +44,10 @@ export default function Map({ id }: { id: string }) {
   useEffect(() => {
     if (mapRef.current) return;
 
-    const map = L.map('map').setView([35.681236, 139.767125], 14);
+    const map = L.map('map', { zoomControl: false }).setView([35.681236, 139.767125], 14);
     mapRef.current = map;
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     const tileUrl = process.env.NEXT_PUBLIC_MAP_TILE_URL ||
       'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
