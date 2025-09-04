@@ -1,15 +1,10 @@
 import {
   boolean,
-  check,
-  date,
-  decimal,
-  foreignKey,
   integer,
   numeric,
   pgEnum,
   pgTable,
   primaryKey,
-  serial,
   text,
   timestamp,
   varchar
@@ -71,14 +66,11 @@ export const coordinateRelations = relations(coordinates, ({ one }) => ({
   })
 }));
 
-export const statusColor =
-  pgEnum('status_color', ['blue', 'brown', 'green', 'pink', 'purple', 'red']);
-
 export const statuses = pgTable('statuses', {
   mapId: varchar('map_id', { length: 11 }),
   index: integer().notNull(),
   name: varchar({ length: 32 }).notNull(),
-  color: statusColor('color').default('blue').notNull(),
+  color: varchar({ length: 32 }).default('blue').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 }, table => [primaryKey({ columns: [table.mapId, table.index] })]);

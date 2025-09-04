@@ -1,37 +1,30 @@
 'use client';
 
 import L from 'leaflet';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
 import markerIconShadow from 'leaflet/dist/images/marker-shadow.png';
 import { createRoot } from 'react-dom/client';
 import { useEffect, useRef } from 'react';
-import type { IconOptions } from 'leaflet';
 
 import PlacePopup from '@/app/place-popup';
 import type { Map } from '@/app/types';
 
-const defaultMarkerIconOptions = {
-  iconUrl: markerIcon.src ?? markerIcon.toString(),
-  iconRetinaUrl: markerIcon2x.src ?? markerIcon2x.toString(),
-  shadowUrl: markerIconShadow.src ?? markerIconShadow.toString(),
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  tooltipAnchor: [16, -28],
-  shadowSize: [41, 41]
-} as IconOptions;
+const MARKER_ICON_URL = `/marker?scale=1`;
+const MARKER_ICON_RETINA_URL = `/marker?scale=2`;
 
-const defaultMarkerIcon = L.icon(defaultMarkerIconOptions);
+function createMarkerIcon(options?: { color?: string; }) {
+  return L.icon({
+    iconUrl: MARKER_ICON_URL + ('&color=' + options?.color) || '',
+    iconRetinaUrl: MARKER_ICON_RETINA_URL + ('&color=' + options?.color) || '',
+    shadowUrl: markerIconShadow.src ?? markerIconShadow.toString(),
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    tooltipAnchor: [16, -28],
+    shadowSize: [41, 41]
+  });
+}
 
-const colorMarkerIcons = {
-  blue: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-blue'}),
-  brown: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-brown'}),
-  green: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-green'}),
-  pink: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-pink'}),
-  purple: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-purple'}),
-  red: L.icon({ ...defaultMarkerIconOptions, className: 'marker-icon-red'}),
-};
+const defaultMarkerIcon = createMarkerIcon();
 
 // アイコン読み込み設定
 L.Marker.prototype.options.icon = defaultMarkerIcon;
@@ -124,16 +117,17 @@ export default function Map({ id }: { id: string }) {
       map_.places.forEach(place => {
         const latlng = { lat: place.coordinates[0].latitude, lng: place.coordinates[0].longitude };
         const container = document.createElement('div');
-        const icon = colorMarkerIcons[place.status.color as keyof typeof colorMarkerIcons];
+        const icon = createMarkerIcon({ color: place.status.color });
         const marker = L.marker(latlng, { icon }).addTo(placesLayer).bindPopup(container);
         createRoot(container).render(
           <PlacePopup
             place={place}
             statuses={map_.statuses}
             onStatusChange={status => {
-              if (status.color && status.color in colorMarkerIcons) {
-                const icon = colorMarkerIcons[status.color as keyof typeof colorMarkerIcons];
+              if (status.color) {
+                const icon = createMarkerIcon({ color: status.color });
                 marker.setIcon(icon);
+                marker.closePopup();
               }
             }} />
         );
