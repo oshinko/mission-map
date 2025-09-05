@@ -41,7 +41,7 @@ async function fetchData(mapId: string) {
 
 export default function Map({ id }: { id: string }) {
   const mapRef = useRef<L.Map>(null);
-  const [name, setName] = useState<string>(null);
+  const [name, setName] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
 
   useEffect(() => {

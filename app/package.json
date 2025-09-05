@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.44.4",
+    "fast-xml-parser": "^5.2.5",
     "leaflet": "^1.9.4",
     "next": "15.4.6",
     "pg": "^8.16.3",
