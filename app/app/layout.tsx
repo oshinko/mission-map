@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import '@/app/globals.css';
-import { DEFAULT_DESCRIPTION, DEFAULT_TITLE } from '@/consts';
+import { description, title } from '@/consts';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,10 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: process.env.TITLE || DEFAULT_TITLE,
-  description: process.env.DESCRIPTION || DEFAULT_DESCRIPTION,
-};
+export const metadata: Metadata = { title, description };
 
 export default function RootLayout({
   children,

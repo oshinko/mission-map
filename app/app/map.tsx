@@ -7,6 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { useEffect, useRef, useState } from 'react';
 
 import PlacePopup from '@/app/place-popup';
+import { title } from '@/consts';
 import type { Map } from '@/types';
 
 const MARKER_ICON_URL = `/marker?scale=1`;
@@ -184,7 +185,7 @@ export default function Map({ id }: { id: string }) {
     <div id="map">
       <footer className="absolute bottom-0 left-0 z-[1000] bg-white/80 px-1 text-xs">
         <Link href="/" className="text-[#0078a8] hover:underline hover:opacity-80">
-          Mission Map
+          {title}
         </Link>
       </footer>
     </div>
