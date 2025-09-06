@@ -25,11 +25,14 @@ export default function Page() {
       <form action={action} className="w-full max-w-md bg-white rounded-lg shadow p-6">
         <fieldset disabled={pending} className="flex flex-col gap-4">
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">KML / KMZ / GeoJSON ファイルを選択</span>
+            <span className="text-sm font-medium text-gray-700">
+              マップファイルを選択
+            </span>
             <input
               type="file"
               name="file"
-              accept=".kml, .kmz, .geojson, .json"
+              accept=".kml, .kmz, .geojson, .json, .yaml, .yml"
+              multiple
               className="
                 mt-2 block w-full text-sm text-gray-600
                 file:mr-4 file:py-2 file:px-4
@@ -44,6 +47,36 @@ export default function Page() {
               "
             />
           </label>
+
+          <div
+            id="map-files-help"
+            role="note"
+            className="mt-2 rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-xs text-gray-700 leading-relaxed"
+          >
+            <p className="font-medium mb-1">マップファイルとは？</p>
+            <ul className="list-disc ml-5 space-y-1">
+              <li>
+                <span className="font-medium">形状ファイル（必須）</span>:
+                <code className="mx-1">.kml</code>
+                <code className="mx-1">.kmz</code>
+                <code className="mx-1">.geojson</code>
+              </li>
+              <li>
+                <span className="font-medium">メタデータファイル（任意）</span>:
+                <code className="mx-1">.yaml</code>
+                <code className="mx-1">.yml</code>
+                <code className="mx-1">.json</code>
+              </li>
+            </ul>
+            <p className="mt-2">
+              形状ファイルだけでもアップロードできます。必要に応じて、形状ファイルとメタデータファイル
+              <span className="whitespace-nowrap">（合計 1〜2 ファイル）</span>を同時に選択できます。
+            </p>
+            <p className="mt-1 text-gray-600">
+              例）<code className="mx-1">map.kml</code> だけ、または
+              <code className="mx-1">map.kml</code> と <code className="mx-1">map.yaml</code>
+            </p>
+          </div>
 
           <button
             type="submit"

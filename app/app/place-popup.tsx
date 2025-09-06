@@ -3,7 +3,7 @@
 import React, { useActionState, useEffect, useRef, useState } from 'react';
 
 import { updatePlace } from '@/app/actions';
-import type { Place, Status } from '@/app/types';
+import type { Place, Status } from '@/types';
 
 export default function PlacePopup(
   {

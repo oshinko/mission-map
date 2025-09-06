@@ -7,7 +7,7 @@ import { createRoot } from 'react-dom/client';
 import { useEffect, useRef, useState } from 'react';
 
 import PlacePopup from '@/app/place-popup';
-import type { Map } from '@/app/types';
+import type { Map } from '@/types';
 
 const MARKER_ICON_URL = `/marker?scale=1`;
 const MARKER_ICON_RETINA_URL = `/marker?scale=2`;

@@ -1,7 +1,7 @@
 'use server';
 
 import { getEndpoint } from '@/utils';
-import type { Status } from '@/app/types';
+import type { Status } from '@/types';
 
 interface UpdatePlaceState {
   status?: Status;
