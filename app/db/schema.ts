@@ -53,8 +53,8 @@ export const coordinates = pgTable('coordinates', {
   mapId: varchar('map_id', { length: 11 }),
   placeLocalId: varchar('place_local_id', { length: 32 }),
   index: integer().default(0).notNull(),
-  latitude: numeric({ precision: 9, scale: 6 }).notNull(),
-  longitude: numeric({ precision: 9, scale: 6 }).notNull(),
+  latitude: numeric({ precision: 9, scale: 6, mode: 'number' }).notNull(),
+  longitude: numeric({ precision: 9, scale: 6, mode: 'number' }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 }, table => [primaryKey({ columns: [table.mapId, table.placeLocalId, table.index] })]);

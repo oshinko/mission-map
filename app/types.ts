@@ -1,31 +1,17 @@
-export interface Map {
-  id: string;
-  name: string;
+import { coordinates, maps, places, statuses } from '@/db/schema';
+
+export type Map = typeof maps.$inferInsert & {
   places: Place[];
   statuses: Status[];
-}
+};
 
-export interface Place {
+export type Place = typeof places.$inferInsert & {
   mapId: string;
   localId: string;
-  type: 'point' | 'area';
-  name: string;
-  address: string;
   coordinates: Coordinate[];
   status: Status;
-}
+};
 
-export interface Coordinate {
-  mapId: string;
-  placeLocalId: string;
-  index: number;
-  latitude: number;
-  longitude: number;
-}
+export type Coordinate = typeof coordinates.$inferInsert;
 
-export interface Status {
-  mapId: string;
-  index: number;
-  name: string;
-  color: string;
-}
+export type Status = typeof statuses.$inferInsert;

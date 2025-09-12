@@ -1,16 +1,11 @@
 'use client';
 
 import React, { useActionState, useEffect, useRef, useState } from 'react';
-import { XMLParser } from 'fast-xml-parser';
 
-import { dummyAction } from '@/app/actions';
-
-// const parser = new XMLParser();
-// const obj = parser.parse('<Placemark><name>地点1</name></Placemark>');
-// console.log(obj.Placemark.name); // "地点1"
+import { createMap } from '@/app/actions';
 
 export default function Page() {
-  const [state, action, pending] = useActionState(dummyAction, null);
+  const [state, action, pending] = useActionState(createMap, null);
   useEffect(() => {
     console.debug('state', state);
     if (state?.map) {
@@ -31,7 +26,7 @@ export default function Page() {
             <input
               type="file"
               name="file"
-              accept=".kml, .kmz, .geojson, .json, .yaml, .yml"
+              accept=".kml, .kmz, .geojson, .yaml, .yml, .json"
               multiple
               className="
                 mt-2 block w-full text-sm text-gray-600
@@ -78,6 +73,12 @@ export default function Page() {
             </p>
           </div>
 
+          {state?.error && (
+            <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {state.error.message}
+            </div>
+          )}
+
           <button
             type="submit"
             className="
@@ -86,7 +87,7 @@ export default function Page() {
               disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#0078a8]
             "
           >
-            新規作成
+            {pending ? '処理中…' : '新規作成'}
           </button>
         </fieldset>
       </form>
