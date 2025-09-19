@@ -3,7 +3,10 @@
 import YAML from 'yaml'
 import { XMLParser } from 'fast-xml-parser';
 
-import { getEndpoint } from '@/utils';
+import { createMapId, getEndpoint } from '@/utils';
+import { db } from '@/db';
+import { maps, coordinates, places, statuses } from '@/db/schema';
+import { mapAge } from '@/consts';
 import type { Map, Place, Status } from '@/types';
 
 interface UpdatePlaceState {
@@ -39,9 +42,100 @@ export async function updatePlace(
   if (res.ok) return { status: await res.json() as Status };
 
   return { error: { message: await res.text() || res.statusText } };
-};
+}
+
+class MapFile {
+  meta: Meta;
+  shape: KML;
+
+  private constructor(meta: Meta, shape: KML) {
+    this.meta = meta;
+    this.shape = shape;
+  }
+
+  static async from(source: { meta: File; shape: File; }) {
+    const meta = parseMeta(await source.meta.text());
+
+    let kml: KML | undefined;
+    try {
+      kml = parseKML(await source.shape.bytes());
+    } catch (e) {
+      return new Error('KML のパースに失敗しました。', { cause: e });
+    }
+
+    return new this(meta, kml);
+  }
+
+  extractMapFromKML(kml: KML): Map {
+    const mapId = createMapId();
+    const mapExpiresAt = new Date(Date.now() + mapAge);
+
+    let mapName: string | undefined;
+    if (kml.Document.name) mapName = kml.Document.name;
+
+    const placemarks = [];
+
+    if (kml.Document.Folder && kml.Document.Folder.length > 0) {
+      const folder = kml.Document.Folder[0];
+      if (!mapName) mapName = folder.name;
+      if (folder.Placemark) placemarks.push(...folder.Placemark);
+    }
+
+    if (!mapName) throw new Error('地図名が取得できませんでした。');
+
+    if (kml.Document.Placemark) placemarks.push(...kml.Document.Placemark);
+
+    const places: Place[] = [];
+    for (const placemark of placemarks) {
+      if (!placemark.name) throw new Error('場所名が取得できませんでした。');
+      if (!placemark.Point?.coordinates) throw new Error('場所の位置が取得できませんでした。');
+      const coodinates = (placemark.Point.coordinates as string).split(',');
+      const [longitude, latitude] = coodinates.map((x: string) => Number(x));
+      const extendedData =
+        placemark.ExtendedData.Data.reduce((acc: any, y: any) => {
+          if (y['@_name'] && typeof y['@_name'] === 'string')
+            acc[y['@_name'].toLowerCase()] = y.value;
+          return acc;
+        }, {});
+      if (!extendedData.id) throw new Error('場所 ID が取得できませんでした。');
+      const localId = extendedData.id;
+      const type = 'point';
+      const name = placemark.name;
+      const address = extendedData.address;
+      const statusIndex = 0;
+      const status = this.meta.statuses[statusIndex];
+      places.push({
+        mapId,
+        localId,
+        type,
+        name,
+        address,
+        statusIndex,
+        status,
+        coordinates: [
+          { latitude, longitude }
+        ]
+      });
+    }
+
+    return {
+      id: mapId,
+      name: mapName,
+      expiresAt: mapExpiresAt,
+      places,
+      statuses: []
+    };
+  }
+
+  extractMap(): Map {
+    if (this.shape.$type === 'kml')
+      return this.extractMapFromKML(this.shape);
+    throw new Error('Not implemented');
+  }
+}
 
 interface KML {
+  $type: 'kml';
   Document: {
     name?: string;
     Folder?: any[];
@@ -57,7 +151,7 @@ function parseKML(data: string | Buffer | ArrayBuffer | Uint8Array<ArrayBuffer>)
       data;
   let xml;
   try {
-    xml = new XMLParser().parse(strOrBuf);
+    xml = new XMLParser({ ignoreAttributes: false }).parse(strOrBuf);
   } catch (e) {
     console.error(e);
     throw e;  // FIXME kmz 未実装
@@ -81,7 +175,7 @@ function parseKML(data: string | Buffer | ArrayBuffer | Uint8Array<ArrayBuffer>)
       doc.Placemark :
       [doc.Placemark];
   }
-  return { Document: doc };
+  return { $type: 'kml', Document: doc };
 }
 
 interface Meta {
@@ -109,48 +203,6 @@ function parseMeta(text: string): Meta {
   return { statuses, expiresAt };
 }
 
-function extractMapFromKML(kml: KML, meta: Meta): Map {
-  const mapId = 'aaaa';  // FIXME 例の ID 生成処理を実装する
-  const mapExpiresAt = new Date(Date.now() + 10 * 24 * 3600 * 1000);  // +10d
-
-  let mapName: string | undefined;
-  if (kml.Document.name) mapName = kml.Document.name;
-
-  const placemarks = [];
-
-  if (kml.Document.Folder && kml.Document.Folder.length > 0) {
-    const folder = kml.Document.Folder[0];
-    if (!mapName) mapName = folder.name;
-    if (folder.Placemark) placemarks.push(...folder.Placemark);
-  }
-
-  if (!mapName) throw new Error('地図名が取得できませんでした。');
-
-  if (kml.Document.Placemark) placemarks.push(...kml.Document.Placemark);
-
-  const places: Place[] = placemarks.map(x => {
-    const localId = '';  // FIXME
-    const type = 'point';  // FIXME
-    const name = '';  // FIXME from <name>
-    const address = '';  // FIXME from <ExtendedData>
-    const statusIndex = 0;  // FIXME
-    const status = {  // FIXME from meta.statuses[statusIndex]
-      mapId,
-      index: 0,
-      name: '',
-    };
-    return { mapId, localId, type, name, address, statusIndex, status, coordinates: [] };
-  });
-
-  return {
-    id: mapId,
-    name: mapName,
-    expiresAt: mapExpiresAt,
-    places,
-    statuses: []
-  };
-}
-
 interface CreateMapState {
   map?: {};
   error?: { message: string; };
@@ -167,29 +219,28 @@ export async function createMap(
   if (files.length === 0) return { error: { message: 'ファイルが選択されていません' } };
 
   // 形状ファイル / メタデータに分類
-  const shapeFile = files.find(x => x.name.match(/\.(kml|kmz|json|geojson)$/i));
-  const metaFile  = files.find(x => x.name.match(/\.(ya?ml|json)$/));
+  const shape = files.find(x => x.name.match(/\.(kml|kmz|json|geojson)$/i));
+  const meta  = files.find(x => x.name.match(/\.(ya?ml|json)$/));
 
-  if (!shapeFile)
+  if (!shape)
     return { error: { message: '形状ファイル（.kml/.kmz/.geojson）を送信してください' } };
 
-  if (!metaFile)
+  if (!meta)
     return { error: { message: 'メタデータファイル（.yaml/.yml/.json）を送信してください' } };
 
-  console.debug('shapeFile.name:', shapeFile.name);
-  console.debug('shapeFile.size:', shapeFile.size);
-  console.debug('shapeFile.type:', shapeFile.type);
+  console.debug('shape.name:', shape.name);
+  console.debug('shape.size:', shape.size);
+  console.debug('shape.type:', shape.type);
 
-  console.debug('metaFile.name:', metaFile.name);
-  console.debug('metaFile.size:', metaFile.size);
-  console.debug('metaFile.type:', metaFile.type);
+  console.debug('meta.name:', meta.name);
+  console.debug('meta.size:', meta.size);
+  console.debug('meta.type:', meta.type);
+
+  const mapFile = MapFile.from({ meta, shape });
 
   let map: Map;
 
   // メタデータを読み込み
-  const text = await metaFile.text();
-  const meta = parseMeta(text);
-  console.debug('meta:', meta);
 
   // 形状ファイルを読み込み
   if (shapeFile.name.match(/\.km[lz]$/i)) {
@@ -202,9 +253,21 @@ export async function createMap(
     // const parser = new XMLParser();
     // const kmlObj = parser.parse(shapeText);
     // console.debug('KML from KMZ keys:', Object.keys(kmlObj));
-    const kml = parseKML(await shapeFile.bytes());
+    let kml: KML | undefined;
+    try {
+      kml = parseKML(await shapeFile.bytes());
+    } catch (e) {
+      console.error(e);
+      return { error: { message: 'KML のパースに失敗しました。' } };
+    }
     console.debug('KML:', JSON.stringify(kml, null, 2));
-    map = extractMapFromKML(kml, meta);
+    try {
+      map = extractMapFromKML(kml, meta);
+    } catch (e) {
+      console.error(e);
+      const message = e instanceof Error ? e.message : 'KML のパースに失敗しました。';
+      return { error: { message } };
+    }
   } else if (shapeFile.name.match(/\.geojson$/i)) {
     const text = await shapeFile.text();
     const geojson = JSON.parse(text);
@@ -216,6 +279,18 @@ export async function createMap(
   }
 
   console.debug('map:', JSON.stringify(map, null, 2));
+
+  const r = await db.transaction(async tx => {
+    await tx.insert(maps).values(map);
+    await tx.insert(statuses).values(map.statuses);
+    await tx.insert(places).values(map.places);
+    await tx.insert(coordinates).values(map.places.flatMap(x => x.coordinates));
+  });
+  console.debug('inserts result:', r);
+  // const map = await db.query.maps.findFirst({
+  //   where: (maps, { eq }) => eq(maps.id, mapId),
+  //   with: { places: { with: { coordinates: true, status: true } }, statuses: true }
+  // });
 
   await new Promise(r => setTimeout(r, 2000));
   return { error: { message: "不明なエラー" } };
